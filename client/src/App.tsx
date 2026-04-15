@@ -1,37 +1,50 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import TopNav from "@/components/TopNav";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Library from "./pages/Library";
+import PaperDetail from "./pages/PaperDetail";
+import SpeciesPage from "./pages/SpeciesPage";
+import { HealthTopicsList, HealthTopicDetail } from "./pages/HealthTopics";
+import { BreedsList, BreedDetail } from "./pages/Breeds";
+import MonthlyUpdates from "./pages/MonthlyUpdates";
+import ContentOpportunities from "./pages/ContentOpportunities";
+import Admin from "./pages/Admin";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <TopNav />
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/cats" component={() => <SpeciesPage species="cat" />} />
+        <Route path="/dogs" component={() => <SpeciesPage species="dog" />} />
+        <Route path="/health-topics" component={HealthTopicsList} />
+        <Route path="/health-topics/:slug" component={HealthTopicDetail} />
+        <Route path="/breeds" component={BreedsList} />
+        <Route path="/breeds/:slug" component={BreedDetail} />
+        <Route path="/monthly-updates" component={MonthlyUpdates} />
+        <Route path="/content-opportunities" component={ContentOpportunities} />
+        <Route path="/library" component={Library} />
+        <Route path="/paper/:id" component={PaperDetail} />
+        <Route path="/admin" component={Admin} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
+          <Toaster theme="dark" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

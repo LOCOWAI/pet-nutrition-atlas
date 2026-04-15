@@ -1,17 +1,20 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  float,
+  boolean,
+  json,
+} from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
+// ============================================================
+// USERS TABLE (auth)
+// ============================================================
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -25,4 +28,157 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// ============================================================
+// TOPICS TABLE — 15 health topics
+// ============================================================
+export const topics = mysqlTable("topics", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull().unique(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  description: text("description"),
+  species: mysqlEnum("species", ["cat", "dog", "both"]).default("both").notNull(),
+  iconCode: varchar("iconCode", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Topic = typeof topics.$inferSelect;
+export type InsertTopic = typeof topics.$inferInsert;
+
+// ============================================================
+// BREEDS TABLE
+// ============================================================
+export const breeds = mysqlTable("breeds", {
+  id: int("id").autoincrement().primaryKey(),
+  species: mysqlEnum("species", ["cat", "dog"]).notNull(),
+  breedName: varchar("breedName", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  overview: text("overview"),
+  commonIssues: json("commonIssues").$type<string[]>(),
+  nutritionFocus: json("nutritionFocus").$type<string[]>(),
+  imageUrl: varchar("imageUrl", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Breed = typeof breeds.$inferSelect;
+export type InsertBreed = typeof breeds.$inferInsert;
+
+// ============================================================
+// PAPERS TABLE — core literature records
+// ============================================================
+export const papers = mysqlTable("papers", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Basic metadata
+  title: text("title").notNull(),
+  authors: text("authors").notNull(),
+  year: int("year").notNull(),
+  journal: varchar("journal", { length: 256 }),
+  doi: varchar("doi", { length: 256 }),
+  url: varchar("url", { length: 512 }),
+  abstract: text("abstract"),
+
+  // Classification
+  species: mysqlEnum("species", ["cat", "dog", "both", "other"]).notNull(),
+  lifeStage: mysqlEnum("lifeStage", ["junior", "adult", "senior", "all"]).default("all").notNull(),
+  studyType: mysqlEnum("studyType", [
+    "review",
+    "rct",
+    "observational",
+    "in_vitro",
+    "meta_analysis",
+    "case_study",
+    "cohort",
+    "other",
+  ]).notNull(),
+  evidenceLevel: mysqlEnum("evidenceLevel", ["high", "medium", "low"]).default("medium").notNull(),
+  breedRelevance: varchar("breedRelevance", { length: 256 }),
+  keywords: json("keywords").$type<string[]>(),
+
+  // AI-generated content
+  coreSummary: text("coreSummary"),
+  keyFindings: json("keyFindings").$type<string[]>(),
+  practicalRelevance: text("practicalRelevance"),
+  limitations: text("limitations"),
+  harvardReference: text("harvardReference"),
+
+  // Admin workflow
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  featured: boolean("featured").default(false).notNull(),
+  aiGenerated: boolean("aiGenerated").default(false).notNull(),
+  reviewNotes: text("reviewNotes"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Paper = typeof papers.$inferSelect;
+export type InsertPaper = typeof papers.$inferInsert;
+
+// ============================================================
+// PAPER_TOPICS — junction table
+// ============================================================
+export const paperTopics = mysqlTable("paper_topics", {
+  id: int("id").autoincrement().primaryKey(),
+  paperId: int("paperId").notNull(),
+  topicId: int("topicId").notNull(),
+});
+
+export type PaperTopic = typeof paperTopics.$inferSelect;
+
+// ============================================================
+// PAPER_BREEDS — junction table
+// ============================================================
+export const paperBreeds = mysqlTable("paper_breeds", {
+  id: int("id").autoincrement().primaryKey(),
+  paperId: int("paperId").notNull(),
+  breedId: int("breedId").notNull(),
+  relevanceScore: float("relevanceScore").default(1.0),
+});
+
+export type PaperBreed = typeof paperBreeds.$inferSelect;
+
+// ============================================================
+// CONTENT_ANGLES — brand content opportunities per paper
+// ============================================================
+export const contentAngles = mysqlTable("content_angles", {
+  id: int("id").autoincrement().primaryKey(),
+  paperId: int("paperId").notNull(),
+  formatType: mysqlEnum("formatType", [
+    "xiaohongshu",
+    "ecommerce_detail",
+    "faq",
+    "video_script",
+    "infographic",
+    "brand_education",
+    "social_post",
+    "scientific_brief",
+  ]).notNull(),
+  titleIdea: varchar("titleIdea", { length: 512 }),
+  consumerSummary: text("consumerSummary"),
+  professionalSummary: text("professionalSummary"),
+  riskNote: text("riskNote"),
+  targetAudience: varchar("targetAudience", { length: 256 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContentAngle = typeof contentAngles.$inferSelect;
+export type InsertContentAngle = typeof contentAngles.$inferInsert;
+
+// ============================================================
+// UPDATE_LOGS — monthly import records
+// ============================================================
+export const updateLogs = mysqlTable("update_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  runDate: timestamp("runDate").defaultNow().notNull(),
+  source: varchar("source", { length: 128 }).notNull(),
+  totalFound: int("totalFound").default(0).notNull(),
+  totalImported: int("totalImported").default(0).notNull(),
+  totalFlagged: int("totalFlagged").default(0).notNull(),
+  status: mysqlEnum("status", ["running", "completed", "failed"]).default("completed").notNull(),
+  notes: text("notes"),
+  triggeredBy: varchar("triggeredBy", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UpdateLog = typeof updateLogs.$inferSelect;
+export type InsertUpdateLog = typeof updateLogs.$inferInsert;
