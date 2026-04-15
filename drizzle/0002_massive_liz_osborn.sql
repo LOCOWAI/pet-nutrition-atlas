@@ -1,0 +1,1 @@
+ALTER TABLE `papers` MODIFY COLUMN `status` enum('pending','approved','rejected','published') NOT NULL DEFAULT 'pending';

@@ -102,7 +102,7 @@ export const papers = mysqlTable("papers", {
   harvardReference: text("harvardReference"),
 
   // Admin workflow
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "published"]).default("pending").notNull(),
   featured: boolean("featured").default(false).notNull(),
   aiGenerated: boolean("aiGenerated").default(false).notNull(),
   reviewNotes: text("reviewNotes"),

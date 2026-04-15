@@ -93,3 +93,15 @@
 - [x] Home/SpeciesPage/HealthTopics/Breeds/MonthlyUpdates/ContentOpportunities/Admin 页面接入 i18n
 - [x] TopNav 增加 EN/中 语言切换按钮（科幻风格）
 - [x] 编写 i18n 与翻译 API 的 Vitest 测试
+
+## Phase 10: 真实数据替换 mock 数据
+- [x] 后端 getPapers 强制 status='published' 过滤（所有公开 API）
+- [x] 后端 getPapers 确保 species/life_stage/topicId 筛选正确传递
+- [x] 前端 Home 页面：Featured Papers / Monthly Updates 改为真实 API 数据
+- [x] 前端 Library 页面：移除任何 mock，确保筛选参数正确传递给 API
+- [x] 前端 SpeciesPage（Cats/Dogs）：改为真实 API 数据
+- [x] 前端 HealthTopics 页面：改为真实 API 数据
+- [x] 前端 Breeds 页面：改为真实 API 数据
+- [x] 前端 MonthlyUpdates 页面：改为真实 API 数据
+- [x] 前端 ContentOpportunities 页面：改为真实 API 数据
+- [x] 验证数据库中 status 字段值，确认 published 记录存在（20 条已迁移）

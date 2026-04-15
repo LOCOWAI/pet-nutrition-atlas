@@ -52,13 +52,15 @@ const papersRouter = router({
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
     }))
-    .query(({ input }) => getPapers({ ...input, status: "approved" })),
+    .query(({ input }) => getPapers({ ...input, status: "published" })),
 
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const paper = await getPaperById(input.id);
       if (!paper) throw new TRPCError({ code: "NOT_FOUND", message: "Paper not found" });
+      // Only expose published papers to public; admins can access via adminList
+      if (paper.status !== "published") throw new TRPCError({ code: "NOT_FOUND", message: "Paper not found" });
       return paper;
     }),
 
@@ -70,7 +72,7 @@ const papersRouter = router({
 
   getFeatured: publicProcedure
     .input(z.object({ limit: z.number().default(6) }))
-    .query(({ input }) => getPapers({ featured: true, status: "approved", limit: input.limit })),
+    .query(({ input }) => getPapers({ featured: true, status: "published", limit: input.limit })),
 
   getMonthly: publicProcedure
     .input(z.object({ year: z.number().optional(), month: z.number().optional() }))
@@ -79,7 +81,7 @@ const papersRouter = router({
   // Admin procedures
   adminList: adminProcedure
     .input(z.object({
-      status: z.enum(["pending", "approved", "rejected"]).optional(),
+      status: z.enum(["pending", "approved", "rejected", "published"]).optional(),
       search: z.string().optional(),
       limit: z.number().default(20),
       offset: z.number().default(0),
@@ -116,7 +118,7 @@ const papersRouter = router({
   updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
-      status: z.enum(["pending", "approved", "rejected"]),
+      status: z.enum(["pending", "approved", "rejected", "published"]),
       reviewNotes: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
@@ -466,7 +468,7 @@ const topicsRouter = router({
     .query(async ({ input }) => {
       const topic = await getTopicBySlug(input.slug);
       if (!topic) throw new TRPCError({ code: "NOT_FOUND" });
-      const { papers: topicPapers } = await getPapers({ topicId: topic.id, status: "approved", limit: 20 });
+      const { papers: topicPapers } = await getPapers({ topicId: topic.id, status: "published", limit: 20 });
       return { ...topic, papers: topicPapers };
     }),
 });

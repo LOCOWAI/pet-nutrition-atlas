@@ -28,10 +28,9 @@ export default function SpeciesPage({ species }: { species: "cat" | "dog" }) {
 
   const { data: papersData, isLoading } = trpc.papers.list.useQuery({
     species,
-    status: undefined,
     limit: 6,
     offset: 0,
-  } as any);
+  });
 
   const { data: topicsData } = trpc.topics.list.useQuery({ species });
   const { data: breedsData } = trpc.breeds.list.useQuery({ species });

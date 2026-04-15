@@ -15,6 +15,13 @@
       "when": 1776244619312,
       "tag": "0001_dazzling_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776252428740,
+      "tag": "0002_massive_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

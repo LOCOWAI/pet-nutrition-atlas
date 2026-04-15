@@ -91,7 +91,7 @@ export async function getPapers(filter: PapersFilter = {}) {
   const {
     search, species, lifeStage, topicId, breedId,
     studyType, evidenceLevel, yearFrom, yearTo,
-    status = "approved", featured, limit = 20, offset = 0,
+    status = "published", featured, limit = 20, offset = 0,
   } = filter;
 
   const conditions: ReturnType<typeof eq>[] = [];
@@ -202,7 +202,7 @@ export async function getRelatedPapers(paperId: number, limit = 4) {
 
   if (topicIds.length === 0) {
     return db.select().from(papers)
-      .where(and(eq(papers.status, "approved"), sql`${papers.id} != ${paperId}` as any))
+      .where(and(eq(papers.status, "published"), sql`${papers.id} != ${paperId}` as any))
       .orderBy(desc(papers.year))
       .limit(limit);
   }
@@ -218,7 +218,7 @@ export async function getRelatedPapers(paperId: number, limit = 4) {
   if (uniqueIds.length === 0) return [];
 
   return db.select().from(papers)
-    .where(and(inArray(papers.id, uniqueIds), eq(papers.status, "approved")))
+    .where(and(inArray(papers.id, uniqueIds), eq(papers.status, "published")))
     .orderBy(desc(papers.year));
 }
 
@@ -231,7 +231,7 @@ export async function getPaperStats() {
     cats: sql<number>`SUM(CASE WHEN species = 'cat' THEN 1 ELSE 0 END)`,
     dogs: sql<number>`SUM(CASE WHEN species = 'dog' THEN 1 ELSE 0 END)`,
     pending: sql<number>`SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)`,
-    approved: sql<number>`SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END)`,
+    approved: sql<number>`SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END)`,
     featured: sql<number>`SUM(CASE WHEN featured = 1 THEN 1 ELSE 0 END)`,
   }).from(papers);
 
@@ -295,7 +295,7 @@ export async function getBreedWithPapers(slug: string) {
   const paperRows = await db.select({ paper: papers, relevanceScore: paperBreeds.relevanceScore })
     .from(paperBreeds)
     .innerJoin(papers, eq(paperBreeds.paperId, papers.id))
-    .where(and(eq(paperBreeds.breedId, breed.id), eq(papers.status, "approved")))
+    .where(and(eq(paperBreeds.breedId, breed.id), eq(papers.status, "published")))
     .orderBy(desc(paperBreeds.relevanceScore));
 
   return { ...breed, papers: paperRows.map(r => ({ ...r.paper, relevanceScore: r.relevanceScore })) };
@@ -351,7 +351,7 @@ export async function getMonthlyPapers(year?: number, month?: number) {
 
   return db.select().from(papers)
     .where(and(
-      eq(papers.status, "approved"),
+      eq(papers.status, "published"),
       sql`YEAR(${papers.createdAt}) = ${targetYear}` as any,
       sql`MONTH(${papers.createdAt}) = ${targetMonth}` as any
     ))
