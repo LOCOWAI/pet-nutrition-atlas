@@ -528,13 +528,9 @@ const updateLogsRouter = router({
         triggeredBy: ctx.user.name || ctx.user.email || "admin",
       });
 
-      // Simulate import workflow (in production, this would call PubMed API etc.)
-      const simulatedFound = Math.floor(Math.random() * 30) + 10;
-      const simulatedImported = Math.floor(simulatedFound * 0.4);
-      const simulatedFlagged = Math.floor(simulatedFound * 0.1);
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      // Mark the log as completed. Actual paper import is performed by the
+      // Project Skill pipeline (save_to_db.py) which writes directly to this
+      // MySQL database. This endpoint only records that an import was triggered.
       const { getDb } = await import("./db");
       const { updateLogs } = await import("../drizzle/schema");
       const { eq } = await import("drizzle-orm");
@@ -543,15 +539,12 @@ const updateLogsRouter = router({
         await db.update(updateLogs)
           .set({
             status: "completed",
-            totalFound: simulatedFound,
-            totalImported: simulatedImported,
-            totalFlagged: simulatedFlagged,
-            notes: `Import completed. Found ${simulatedFound} papers, imported ${simulatedImported}, flagged ${simulatedFlagged} for review.`,
+            notes: input.notes || "Import triggered. Run the Project Skill pipeline (save_to_db.py) to populate papers.",
           })
           .where(eq(updateLogs.id, logId));
       }
 
-      return { logId, totalFound: simulatedFound, totalImported: simulatedImported, totalFlagged: simulatedFlagged };
+      return { logId, totalFound: 0, totalImported: 0, totalFlagged: 0 };
     }),
 });
 

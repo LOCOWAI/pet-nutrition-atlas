@@ -10,6 +10,8 @@ import {
   Check,
   ChevronDown,
   Edit,
+  Eye,
+  EyeOff,
   Loader2,
   Lock,
   Quote,
@@ -134,6 +136,23 @@ function PaperAdminRow({
                 <RefreshCw className="w-3 h-3" /> {t("admin_reset")}
               </button>
             )}
+            {paper.status !== "published" ? (
+              <button
+                onClick={() => updateStatus.mutate({ id: paper.id, status: "published" })}
+                disabled={updateStatus.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[oklch(0.55_0.18_160/0.15)] border border-[oklch(0.55_0.18_160/0.5)] text-[oklch(0.70_0.18_160)] text-[0.68rem] font-['IBM_Plex_Mono'] tracking-wider uppercase rounded-sm hover:bg-[oklch(0.55_0.18_160/0.25)] transition-all disabled:opacity-50"
+              >
+                <Eye className="w-3 h-3" /> {t("admin_publish")}
+              </button>
+            ) : (
+              <button
+                onClick={() => updateStatus.mutate({ id: paper.id, status: "pending" })}
+                disabled={updateStatus.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[oklch(0.60_0.10_50/0.15)] border border-[oklch(0.60_0.10_50/0.5)] text-[oklch(0.75_0.10_50)] text-[0.68rem] font-['IBM_Plex_Mono'] tracking-wider uppercase rounded-sm hover:bg-[oklch(0.60_0.10_50/0.25)] transition-all disabled:opacity-50"
+              >
+                <EyeOff className="w-3 h-3" /> {t("admin_unpublish")}
+              </button>
+            )}
             <button
               onClick={() => toggleFeatured.mutate({ id: paper.id, featured: !paper.featured })}
               disabled={toggleFeatured.isPending}
@@ -253,6 +272,7 @@ export default function Admin() {
   const STATUS_TABS = [
     { value: "pending", label: t("admin_tab_pending") },
     { value: "approved", label: t("admin_tab_approved") },
+    { value: "published", label: t("admin_tab_published") },
     { value: "rejected", label: t("admin_tab_rejected") },
   ];
 
