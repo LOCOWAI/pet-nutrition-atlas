@@ -1,20 +1,22 @@
 import PaperCard from "@/components/PaperCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, BookOpen, FlaskConical, Heart } from "lucide-react";
+import { ArrowLeft, BookOpen, Heart } from "lucide-react";
 import { Link } from "wouter";
 
 // Topic list page
 export function HealthTopicsList() {
   const { data: topics, isLoading } = trpc.topics.list.useQuery({});
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-[oklch(0.20_0.015_240)] bg-[oklch(0.12_0.020_240)]">
+      <div className="border-b border-[oklch(0.20_0.030_285)] bg-[oklch(0.11_0.022_285)]">
         <div className="container py-10">
           <div className="nasa-label mb-2">Research Categories</div>
-          <h1 className="text-3xl font-bold text-white font-['IBM_Plex_Sans'] mb-2">Health Topics</h1>
-          <p className="text-[0.82rem] text-[oklch(0.55_0.010_240)]">
-            15 health scenarios covering feline and canine nutrition research
+          <h1 className="text-3xl font-bold text-white font-['IBM_Plex_Sans'] mb-2">{t("topics_title")}</h1>
+          <p className="text-[0.82rem] text-[oklch(0.52_0.010_285)]">
+            {t("topics_subtitle")}
           </p>
         </div>
       </div>
@@ -32,18 +34,18 @@ export function HealthTopicsList() {
               <Link key={topic.id} href={`/health-topics/${topic.slug}`}>
                 <div className="nasa-card p-5 cursor-pointer group h-full">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-sm bg-[oklch(0.55_0.22_25/0.12)] border border-[oklch(0.55_0.22_25/0.25)] flex items-center justify-center flex-shrink-0">
-                      <Heart className="w-4 h-4 text-[oklch(0.55_0.22_25)]" />
+                    <div className="w-8 h-8 rounded-sm bg-[oklch(0.46_0.28_290/0.12)] border border-[oklch(0.46_0.28_290/0.25)] flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-4 h-4 text-[oklch(0.72_0.18_290)]" />
                     </div>
                     <div>
                       <div className="nasa-label mb-0.5">
-                        {topic.species === "cat" ? "Feline" : topic.species === "dog" ? "Canine" : "Feline & Canine"}
+                        {topic.species === "cat" ? t("common_feline") : topic.species === "dog" ? t("common_canine") : `${t("common_feline")} & ${t("common_canine")}`}
                       </div>
-                      <h3 className="text-[0.88rem] font-semibold text-white group-hover:text-[oklch(0.80_0.15_25)] transition-colors font-['IBM_Plex_Sans'] mb-1">
+                      <h3 className="text-[0.88rem] font-semibold text-white group-hover:text-[oklch(0.82_0.14_290)] transition-colors font-['IBM_Plex_Sans'] mb-1">
                         {topic.name}
                       </h3>
                       {topic.description && (
-                        <p className="text-[0.72rem] text-[oklch(0.52_0.010_240)] leading-relaxed line-clamp-2">
+                        <p className="text-[0.72rem] text-[oklch(0.50_0.010_285)] leading-relaxed line-clamp-2">
                           {topic.description}
                         </p>
                       )}
@@ -62,14 +64,15 @@ export function HealthTopicsList() {
 // Topic detail page
 export function HealthTopicDetail({ params }: { params: { slug: string } }) {
   const { data, isLoading, error } = trpc.topics.getBySlug.useQuery({ slug: params.slug });
+  const { t } = useLanguage();
 
   if (isLoading) {
     return (
       <div className="min-h-screen">
         <div className="container py-8">
           <div className="animate-pulse space-y-4 max-w-4xl">
-            <div className="h-6 w-48 bg-[oklch(0.20_0.018_240)] rounded-sm" />
-            <div className="h-10 w-3/4 bg-[oklch(0.20_0.018_240)] rounded-sm" />
+            <div className="h-6 w-48 bg-[oklch(0.20_0.025_285)] rounded-sm" />
+            <div className="h-10 w-3/4 bg-[oklch(0.20_0.025_285)] rounded-sm" />
           </div>
         </div>
       </div>
@@ -80,9 +83,9 @@ export function HealthTopicDetail({ params }: { params: { slug: string } }) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[oklch(0.50_0.010_240)] mb-4">Topic not found</p>
-          <Link href="/health-topics" className="text-[0.72rem] font-['IBM_Plex_Mono'] tracking-wider uppercase text-[oklch(0.55_0.22_25)]">
-            ← Back to Health Topics
+          <p className="text-[oklch(0.50_0.010_285)] mb-4">{t("common_not_found")}</p>
+          <Link href="/health-topics" className="text-[0.72rem] font-['IBM_Plex_Mono'] tracking-wider uppercase text-[oklch(0.72_0.18_290)]">
+            ← {t("topics_back")}
           </Link>
         </div>
       </div>
@@ -91,27 +94,27 @@ export function HealthTopicDetail({ params }: { params: { slug: string } }) {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-[oklch(0.20_0.015_240)] bg-[oklch(0.12_0.020_240)]">
+      <div className="border-b border-[oklch(0.20_0.030_285)] bg-[oklch(0.11_0.022_285)]">
         <div className="container py-10">
-          <Link href="/health-topics" className="inline-flex items-center gap-2 text-[0.68rem] font-['IBM_Plex_Mono'] tracking-wider uppercase text-[oklch(0.50_0.010_240)] hover:text-[oklch(0.55_0.22_25)] mb-4">
-            <ArrowLeft className="w-3 h-3" /> Health Topics
+          <Link href="/health-topics" className="inline-flex items-center gap-2 text-[0.68rem] font-['IBM_Plex_Mono'] tracking-wider uppercase text-[oklch(0.50_0.010_285)] hover:text-[oklch(0.72_0.18_290)] mb-4">
+            <ArrowLeft className="w-3 h-3" /> {t("topics_back")}
           </Link>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-sm bg-[oklch(0.55_0.22_25/0.12)] border border-[oklch(0.55_0.22_25/0.25)] flex items-center justify-center">
-              <Heart className="w-5 h-5 text-[oklch(0.55_0.22_25)]" />
+            <div className="w-10 h-10 rounded-sm bg-[oklch(0.46_0.28_290/0.12)] border border-[oklch(0.46_0.28_290/0.25)] flex items-center justify-center">
+              <Heart className="w-5 h-5 text-[oklch(0.72_0.18_290)]" />
             </div>
             <div>
               <div className="nasa-label">
-                {data.species === "cat" ? "Feline" : data.species === "dog" ? "Canine" : "Feline & Canine"}
+                {data.species === "cat" ? t("common_feline") : data.species === "dog" ? t("common_canine") : `${t("common_feline")} & ${t("common_canine")}`}
               </div>
               <h1 className="text-3xl font-bold text-white font-['IBM_Plex_Sans']">{data.name}</h1>
             </div>
           </div>
           {data.description && (
-            <p className="text-[0.82rem] text-[oklch(0.58_0.010_240)] max-w-2xl leading-relaxed">{data.description}</p>
+            <p className="text-[0.82rem] text-[oklch(0.55_0.010_285)] max-w-2xl leading-relaxed">{data.description}</p>
           )}
-          <div className="mt-3 text-[0.70rem] text-[oklch(0.45_0.010_240)] font-['IBM_Plex_Mono']">
-            {data.papers.length} papers in this category
+          <div className="mt-3 text-[0.70rem] text-[oklch(0.45_0.010_285)] font-['IBM_Plex_Mono']">
+            {data.papers.length} {t("topics_papers_count")}
           </div>
         </div>
       </div>
@@ -124,9 +127,9 @@ export function HealthTopicDetail({ params }: { params: { slug: string } }) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 border border-[oklch(0.20_0.015_240)]">
-            <BookOpen className="w-8 h-8 mx-auto mb-3 text-[oklch(0.35_0.010_240)]" />
-            <p className="text-[oklch(0.48_0.010_240)] text-sm">No papers in this topic yet</p>
+          <div className="text-center py-16 border border-[oklch(0.20_0.030_285)]">
+            <BookOpen className="w-8 h-8 mx-auto mb-3 text-[oklch(0.32_0.010_285)]" />
+            <p className="text-[oklch(0.48_0.010_285)] text-sm">{t("topics_no_papers")}</p>
           </div>
         )}
       </div>

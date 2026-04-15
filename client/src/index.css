@@ -4,8 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   NASA DARK THEME — Pet Nutrition Research Atlas
-   Deep Navy / Black base · White text · Red accent
+   SCI-FI DARK THEME — Pet Nutrition Research Atlas
+   Deep Space Black base · White text
+   Deep Purple (#7c3aed → oklch ~0.45 0.28 290) primary accent
+   Light Purple (#a78bfa → oklch ~0.72 0.18 290) secondary accent
    ============================================================ */
 
 @theme inline {
@@ -53,62 +55,74 @@
 }
 
 /* ============================================================
-   NASA DARK THEME TOKENS (always dark — no light mode)
+   SCI-FI PURPLE THEME TOKENS (always dark — no light mode)
+   Deep Purple:  oklch(0.46 0.28 290)  ≈ #7c3aed
+   Light Purple: oklch(0.72 0.18 290)  ≈ #a78bfa
    ============================================================ */
 :root {
-  /* NASA Red accent */
-  --primary:            oklch(0.55 0.22 25);
+  /* === ACCENT COLORS === */
+  /* Deep purple — primary CTA, borders, highlights */
+  --purple-deep:   oklch(0.46 0.28 290);
+  /* Light purple — secondary glow, hover, text accents */
+  --purple-light:  oklch(0.72 0.18 290);
+  /* Ultra-light purple — subtle tints */
+  --purple-mist:   oklch(0.82 0.10 290);
+  /* Neon purple — glowing effects */
+  --purple-neon:   oklch(0.60 0.30 295);
+
+  /* Primary = deep purple */
+  --primary:            oklch(0.46 0.28 290);
   --primary-foreground: oklch(0.99 0.000 0);
 
-  /* Deep space background */
-  --background:         oklch(0.10 0.015 240);
-  --foreground:         oklch(0.95 0.005 240);
+  /* Deep space background — very dark with slight purple tint */
+  --background:         oklch(0.09 0.018 285);
+  --foreground:         oklch(0.95 0.005 285);
 
-  /* Card / panel */
-  --card:               oklch(0.14 0.020 240);
-  --card-foreground:    oklch(0.95 0.005 240);
+  /* Card / panel — dark purple-tinted */
+  --card:               oklch(0.13 0.022 285);
+  --card-foreground:    oklch(0.95 0.005 285);
 
   /* Popover */
-  --popover:            oklch(0.14 0.020 240);
-  --popover-foreground: oklch(0.95 0.005 240);
+  --popover:            oklch(0.13 0.022 285);
+  --popover-foreground: oklch(0.95 0.005 285);
 
   /* Secondary sections */
-  --secondary:          oklch(0.18 0.025 240);
-  --secondary-foreground: oklch(0.90 0.008 240);
+  --secondary:          oklch(0.17 0.030 285);
+  --secondary-foreground: oklch(0.90 0.008 285);
 
   /* Muted */
-  --muted:              oklch(0.20 0.020 240);
-  --muted-foreground:   oklch(0.58 0.012 240);
+  --muted:              oklch(0.19 0.025 285);
+  --muted-foreground:   oklch(0.56 0.015 285);
 
-  /* Accent = NASA red */
-  --accent:             oklch(0.55 0.22 25);
-  --accent-foreground:  oklch(0.99 0.000 0);
+  /* Accent = light purple */
+  --accent:             oklch(0.72 0.18 290);
+  --accent-foreground:  oklch(0.09 0.018 285);
 
-  /* Destructive */
-  --destructive:        oklch(0.55 0.22 25);
+  /* Destructive — keep a distinct warning red */
+  --destructive:        oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.99 0.000 0);
 
   /* Borders & inputs */
-  --border:             oklch(0.24 0.018 240);
-  --input:              oklch(0.18 0.025 240);
-  --ring:               oklch(0.55 0.22 25);
+  --border:             oklch(0.22 0.030 285);
+  --input:              oklch(0.17 0.030 285);
+  --ring:               oklch(0.46 0.28 290);
 
   /* Charts */
-  --chart-1: oklch(0.55 0.22 25);
-  --chart-2: oklch(0.50 0.14 240);
-  --chart-3: oklch(0.65 0.15 180);
+  --chart-1: oklch(0.46 0.28 290);
+  --chart-2: oklch(0.72 0.18 290);
+  --chart-3: oklch(0.65 0.18 145);
   --chart-4: oklch(0.70 0.18 60);
-  --chart-5: oklch(0.60 0.20 300);
+  --chart-5: oklch(0.60 0.22 220);
 
   /* Sidebar (admin) */
-  --sidebar:                      oklch(0.12 0.025 240);
-  --sidebar-foreground:           oklch(0.90 0.008 240);
-  --sidebar-primary:              oklch(0.55 0.22 25);
+  --sidebar:                      oklch(0.11 0.025 285);
+  --sidebar-foreground:           oklch(0.90 0.008 285);
+  --sidebar-primary:              oklch(0.46 0.28 290);
   --sidebar-primary-foreground:   oklch(0.99 0.000 0);
-  --sidebar-accent:               oklch(0.18 0.025 240);
-  --sidebar-accent-foreground:    oklch(0.90 0.008 240);
-  --sidebar-border:               oklch(0.22 0.018 240);
-  --sidebar-ring:                 oklch(0.55 0.22 25);
+  --sidebar-accent:               oklch(0.17 0.030 285);
+  --sidebar-accent-foreground:    oklch(0.90 0.008 285);
+  --sidebar-border:               oklch(0.22 0.030 285);
+  --sidebar-ring:                 oklch(0.46 0.28 290);
 }
 
 /* ============================================================
@@ -136,24 +150,24 @@
     font-family: "IBM Plex Sans", "Inter", sans-serif;
     font-weight: 600;
     letter-spacing: -0.01em;
-    color: oklch(0.97 0.003 240);
+    color: oklch(0.97 0.003 285);
   }
 
   a { color: inherit; text-decoration: none; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: oklch(0.12 0.020 240); }
-  ::-webkit-scrollbar-thumb { background: oklch(0.28 0.025 240); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: oklch(0.55 0.22 25); }
+  ::-webkit-scrollbar-track { background: oklch(0.11 0.022 285); }
+  ::-webkit-scrollbar-thumb { background: oklch(0.26 0.040 285); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: oklch(0.46 0.28 290); }
 
   ::selection {
-    background: oklch(0.55 0.22 25 / 0.35);
+    background: oklch(0.46 0.28 290 / 0.40);
     color: oklch(0.99 0.000 0);
   }
 
   *:focus-visible {
-    outline: 2px solid oklch(0.55 0.22 25);
+    outline: 2px solid oklch(0.72 0.18 290);
     outline-offset: 2px;
   }
 
@@ -187,16 +201,16 @@
 
   .flex { min-height: 0; min-width: 0; }
 
-  /* ---- NASA CARD ---- */
+  /* ---- SCI-FI CARD ---- */
   .nasa-card {
-    background: oklch(0.14 0.020 240);
-    border: 1px solid oklch(0.22 0.018 240);
-    border-top: 2px solid oklch(0.55 0.22 25);
+    background: oklch(0.13 0.022 285);
+    border: 1px solid oklch(0.22 0.030 285);
+    border-top: 2px solid oklch(0.46 0.28 290);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   }
   .nasa-card:hover {
-    border-color: oklch(0.35 0.050 240);
-    box-shadow: 0 4px 24px oklch(0.55 0.22 25 / 0.12);
+    border-color: oklch(0.35 0.060 285);
+    box-shadow: 0 4px 28px oklch(0.46 0.28 290 / 0.18), 0 0 0 1px oklch(0.46 0.28 290 / 0.10);
   }
 
   /* ---- NASA LABEL (monospace caps) ---- */
@@ -206,7 +220,7 @@
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: oklch(0.55 0.22 25);
+    color: oklch(0.72 0.18 290);
   }
 
   /* ---- NASA TAG ---- */
@@ -219,27 +233,37 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 0.18rem 0.55rem;
-    border: 1px solid oklch(0.30 0.025 240);
-    background: oklch(0.16 0.022 240);
-    color: oklch(0.70 0.010 240);
+    border: 1px solid oklch(0.28 0.035 285);
+    background: oklch(0.15 0.025 285);
+    color: oklch(0.68 0.012 285);
     border-radius: 2px;
     white-space: nowrap;
   }
+  /* Deep purple tag — primary accent */
   .nasa-tag-red {
-    border-color: oklch(0.55 0.22 25 / 0.5);
-    background: oklch(0.55 0.22 25 / 0.12);
-    color: oklch(0.80 0.15 25);
+    border-color: oklch(0.46 0.28 290 / 0.55);
+    background: oklch(0.46 0.28 290 / 0.14);
+    color: oklch(0.82 0.16 290);
   }
+  /* Light purple tag — secondary accent */
+  .nasa-tag-purple {
+    border-color: oklch(0.72 0.18 290 / 0.50);
+    background: oklch(0.72 0.18 290 / 0.12);
+    color: oklch(0.85 0.12 290);
+  }
+  /* Blue tag — feline */
   .nasa-tag-blue {
-    border-color: oklch(0.50 0.14 240 / 0.5);
-    background: oklch(0.50 0.14 240 / 0.12);
-    color: oklch(0.72 0.10 240);
+    border-color: oklch(0.55 0.18 240 / 0.5);
+    background: oklch(0.55 0.18 240 / 0.12);
+    color: oklch(0.75 0.12 240);
   }
+  /* Green tag — canine */
   .nasa-tag-green {
     border-color: oklch(0.65 0.18 145 / 0.5);
     background: oklch(0.65 0.18 145 / 0.10);
     color: oklch(0.72 0.14 145);
   }
+  /* Yellow tag */
   .nasa-tag-yellow {
     border-color: oklch(0.80 0.18 75 / 0.5);
     background: oklch(0.80 0.18 75 / 0.10);
@@ -249,27 +273,28 @@
   /* ---- GRID BG ---- */
   .nasa-grid-bg {
     background-image:
-      linear-gradient(oklch(0.25 0.018 240 / 0.25) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.25 0.018 240 / 0.25) 1px, transparent 1px);
+      linear-gradient(oklch(0.28 0.035 285 / 0.20) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.28 0.035 285 / 0.20) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
-  /* ---- HERO GRADIENT ---- */
+  /* ---- HERO GRADIENT — purple nebula ---- */
   .nasa-hero-gradient {
     background:
-      radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.22 0.04 240 / 0.55) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 40% at 85% 15%, oklch(0.55 0.22 25 / 0.07) 0%, transparent 60%),
-      oklch(0.10 0.015 240);
+      radial-gradient(ellipse 70% 55% at 50% 0%, oklch(0.46 0.28 290 / 0.22) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 45% at 85% 20%, oklch(0.72 0.18 290 / 0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 40% at 10% 80%, oklch(0.46 0.28 290 / 0.08) 0%, transparent 55%),
+      oklch(0.09 0.018 285);
   }
 
   /* ---- DIVIDER ---- */
   .nasa-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, oklch(0.30 0.025 240), transparent);
+    background: linear-gradient(90deg, transparent, oklch(0.32 0.040 285), transparent);
   }
 
   /* ---- ACCENT LINE ---- */
-  .nasa-accent-line { border-top: 2px solid oklch(0.55 0.22 25); }
+  .nasa-accent-line { border-top: 2px solid oklch(0.46 0.28 290); }
 
   /* ---- EVIDENCE BADGES ---- */
   .evidence-high {
@@ -300,15 +325,15 @@
     display: block;
     width: 3px;
     height: 1.4em;
-    background: oklch(0.55 0.22 25);
+    background: linear-gradient(180deg, oklch(0.46 0.28 290), oklch(0.72 0.18 290));
     border-radius: 1px;
     flex-shrink: 0;
   }
 
   /* ---- STAT BOX ---- */
   .nasa-stat-box {
-    background: oklch(0.14 0.020 240);
-    border: 1px solid oklch(0.22 0.018 240);
+    background: oklch(0.13 0.022 285);
+    border: 1px solid oklch(0.22 0.030 285);
     padding: 1.25rem 1.5rem;
     position: relative;
     overflow: hidden;
@@ -320,7 +345,56 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, oklch(0.55 0.22 25), transparent);
+    background: linear-gradient(90deg, oklch(0.46 0.28 290), oklch(0.72 0.18 290), transparent);
+  }
+
+  /* ---- GLOW BUTTON ---- */
+  .btn-purple {
+    background: oklch(0.46 0.28 290);
+    color: oklch(0.99 0.000 0);
+    border: 1px solid oklch(0.55 0.28 290);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.25rem;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 12px oklch(0.46 0.28 290 / 0.30);
+  }
+  .btn-purple:hover {
+    background: oklch(0.52 0.28 290);
+    box-shadow: 0 0 20px oklch(0.46 0.28 290 / 0.50), 0 0 40px oklch(0.46 0.28 290 / 0.20);
+  }
+
+  /* ---- LANG TOGGLE ---- */
+  .lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid oklch(0.28 0.040 285);
+    border-radius: 2px;
+    overflow: hidden;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+  }
+  .lang-toggle-btn {
+    padding: 0.28rem 0.65rem;
+    transition: all 0.15s ease;
+    color: oklch(0.55 0.012 285);
+    background: transparent;
+  }
+  .lang-toggle-btn.active {
+    background: oklch(0.46 0.28 290);
+    color: oklch(0.99 0.000 0);
+    box-shadow: 0 0 10px oklch(0.46 0.28 290 / 0.40);
+  }
+  .lang-toggle-btn:not(.active):hover {
+    background: oklch(0.46 0.28 290 / 0.15);
+    color: oklch(0.82 0.16 290);
   }
 }
 
@@ -339,7 +413,12 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+@keyframes purple-glow {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.46 0.28 290 / 0.30); }
+  50%       { box-shadow: 0 0 20px oklch(0.46 0.28 290 / 0.60), 0 0 40px oklch(0.72 0.18 290 / 0.20); }
+}
 
-.animate-nasa-pulse { animation: nasa-pulse 2.5s ease-in-out infinite; }
-.animate-slide-up   { animation: slide-up 0.45s ease-out forwards; }
-.animate-fade-in    { animation: fade-in 0.3s ease-out forwards; }
+.animate-nasa-pulse   { animation: nasa-pulse 2.5s ease-in-out infinite; }
+.animate-slide-up     { animation: slide-up 0.45s ease-out forwards; }
+.animate-fade-in      { animation: fade-in 0.3s ease-out forwards; }
+.animate-purple-glow  { animation: purple-glow 3s ease-in-out infinite; }

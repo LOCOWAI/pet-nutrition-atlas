@@ -270,3 +270,33 @@ describe("updateLogs", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
+
+// ============================================================
+// TRANSLATE PAPER TESTS
+// ============================================================
+describe("papers.translatePaper", () => {
+  it("throws BAD_REQUEST when required fields are missing", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    // translatePaper requires title, authors, year — missing all → BAD_REQUEST from zod
+    await expect((caller.papers.translatePaper as any)({})).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("is a public procedure accessible without auth", async () => {
+    // Verify it's accessible as a public procedure (no UNAUTHORIZED)
+    const caller = appRouter.createCaller(createPublicContext());
+    // Calling with valid schema but LLM will fail in test env — just check it's not auth-blocked
+    const promise = caller.papers.translatePaper({
+      id: 1,
+      title: "Test",
+      authors: "Author",
+      year: 2024,
+    });
+    // Should either succeed or fail with a non-auth error
+    await promise.catch((e: any) => {
+      expect(e.code).not.toBe("UNAUTHORIZED");
+      expect(e.code).not.toBe("FORBIDDEN");
+    });
+  });
+});

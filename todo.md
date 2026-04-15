@@ -81,3 +81,15 @@
 - [x] Vitest: 27 tests covering auth, papers, topics, breeds, contentAngles, updateLogs
 - [x] RBAC tests: UNAUTHORIZED for public, FORBIDDEN for non-admin, success for admin
 - [x] Final checkpoint save
+
+## Phase 9: 双语切换 & 紫色主题重设计
+- [x] 将 CSS 主色从红色系改为深紫/浅紫科幻双色体系（--accent-primary: 深紫, --accent-secondary: 浅紫）
+- [x] 更新 TopNav、PaperCard、所有 nasa-tag/nasa-card 等组件的颜色引用
+- [x] 构建 LanguageContext（支持 en/zh 切换，localStorage 持久化）
+- [x] 编写完整中英文 UI 翻译字典（涵盖所有页面静态文本）
+- [x] 后端 papers.translatePaper 路由：AI 翻译文献 title/coreSummary/keyFindings/practicalRelevance/limitations/harvardReference/contentAngles
+- [x] PaperDetail 页面：中文模式下调用翻译 API，展示中文内容（带缓存）
+- [x] Library 页面：中文模式下文献卡片标题/摘要显示中文
+- [x] Home/SpeciesPage/HealthTopics/Breeds/MonthlyUpdates/ContentOpportunities/Admin 页面接入 i18n
+- [x] TopNav 增加 EN/中 语言切换按钮（科幻风格）
+- [x] 编写 i18n 与翻译 API 的 Vitest 测试

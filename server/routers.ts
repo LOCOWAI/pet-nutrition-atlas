@@ -328,6 +328,129 @@ Return: { "angles": [...] }`,
 
       return { angles };
     }),
+
+  // ============================================================
+  // TRANSLATE PAPER — AI Chinese translation
+  // ============================================================
+  translatePaper: publicProcedure
+    .input(z.object({
+      id: z.number(),
+      title: z.string(),
+      authors: z.string(),
+      journal: z.string().optional(),
+      year: z.number(),
+      coreSummary: z.string().optional(),
+      keyFindings: z.array(z.string()).optional(),
+      practicalRelevance: z.string().optional(),
+      limitations: z.string().optional(),
+      harvardReference: z.string().optional(),
+      contentAngles: z.array(z.object({
+        id: z.number(),
+        formatType: z.string(),
+        titleIdea: z.string().optional(),
+        consumerSummary: z.string().optional(),
+        professionalSummary: z.string().optional(),
+        riskNote: z.string().optional(),
+        targetAudience: z.string().optional(),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const systemPrompt = `你是一位专业的宠物营养学术翻译专家，精通中英双语，熟悉宠物食品行业术语与学术写作规范。
+请将以下宠物营养学术文献的各字段翻译成地道、专业的简体中文。
+翻译要求：
+1. 保持学术严谨性，使用宠物营养领域的专业术语
+2. 核心摘要和主要发现需流畅自然，符合中文学术写作习惯
+3. 实践意义部分需贴合中国宠物食品品牌的内容创作场景
+4. Harvard引用格式保留英文原文（学术引用不翻译），但在后面加上中文期刊名翻译（如有）
+5. 内容创作方向的消费者版本需符合中国消费者的语言习惯（可参考小红书风格）
+6. 品牌声称风险提示需结合中国法规语境
+请严格按照JSON格式返回，不要添加任何额外说明。`;
+
+      const userContent = JSON.stringify({
+        title: input.title,
+        authors: input.authors,
+        journal: input.journal,
+        year: input.year,
+        coreSummary: input.coreSummary,
+        keyFindings: input.keyFindings,
+        practicalRelevance: input.practicalRelevance,
+        limitations: input.limitations,
+        harvardReference: input.harvardReference,
+        contentAngles: input.contentAngles?.map(a => ({
+          id: a.id,
+          formatType: a.formatType,
+          titleIdea: a.titleIdea,
+          consumerSummary: a.consumerSummary,
+          professionalSummary: a.professionalSummary,
+          riskNote: a.riskNote,
+          targetAudience: a.targetAudience,
+        })),
+      });
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `请翻译以下文献字段：\n${userContent}` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "paper_translation",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                coreSummary: { type: "string" },
+                keyFindings: { type: "array", items: { type: "string" } },
+                practicalRelevance: { type: "string" },
+                limitations: { type: "string" },
+                harvardReference: { type: "string" },
+                contentAngles: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "number" },
+                      titleIdea: { type: "string" },
+                      consumerSummary: { type: "string" },
+                      professionalSummary: { type: "string" },
+                      riskNote: { type: "string" },
+                      targetAudience: { type: "string" },
+                    },
+                    required: ["id", "titleIdea", "consumerSummary", "professionalSummary", "riskNote", "targetAudience"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["title", "coreSummary", "keyFindings", "practicalRelevance", "limitations", "harvardReference", "contentAngles"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const rawContent = response.choices[0]?.message?.content;
+      const content = typeof rawContent === "string" ? rawContent : null;
+      if (!content) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Translation failed" });
+
+      return JSON.parse(content) as {
+        title: string;
+        coreSummary: string;
+        keyFindings: string[];
+        practicalRelevance: string;
+        limitations: string;
+        harvardReference: string;
+        contentAngles: Array<{
+          id: number;
+          titleIdea: string;
+          consumerSummary: string;
+          professionalSummary: string;
+          riskNote: string;
+          targetAudience: string;
+        }>;
+      };
+    }),
 });
 
 // ============================================================
