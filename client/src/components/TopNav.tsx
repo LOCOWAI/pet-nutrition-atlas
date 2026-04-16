@@ -14,6 +14,7 @@ import {
   Microscope,
   RefreshCw,
   Settings,
+  Shield,
   Sparkles,
   X,
 } from "lucide-react";
@@ -36,6 +37,9 @@ export default function TopNav() {
     { label: t("nav_monthly_updates"), href: "/monthly-updates", icon: RefreshCw },
     { label: t("nav_content_opportunities"), href: "/content-opportunities", icon: FlaskConical },
     { label: t("nav_reference_library"), href: "/library", icon: BookOpen },
+    { label: t("ing_module_label"), href: "/ingredients", icon: FlaskConical },
+    { label: t("guide_module_label"), href: "/guidelines", icon: Shield },
+    { label: t("form_module_label"), href: "/formulation", icon: Sparkles },
   ];
 
   useEffect(() => {

@@ -12,6 +12,10 @@ import {
   getBreedWithPapers,
   getBreeds,
   getContentAngles,
+  getGuidelines,
+  getGuidelineById,
+  getIngredientByName,
+  getIngredientIndex,
   getMonthlyPapers,
   getPaperById,
   getPapers,
@@ -20,6 +24,7 @@ import {
   getTopicBySlug,
   getTopics,
   getUpdateLogs,
+  updateGuideline,
   updatePaper,
 } from "./db";
 
@@ -549,6 +554,165 @@ const updateLogsRouter = router({
 });
 
 // ============================================================
+// GUIDELINES ROUTER
+// ============================================================
+const guidelinesRouter = router({
+  list: publicProcedure
+    .input(z.object({
+      species: z.enum(["cat", "dog", "both"]).optional(),
+      lifeStage: z.enum(["junior", "adult", "senior", "all"]).optional(),
+      category: z.enum(["nutrition", "dental", "senior_care", "weight_management", "kidney", "liver", "cardiac", "dermatology", "oncology", "reproduction", "general_health"]).optional(),
+      organization: z.enum(["AAHA", "WSAVA", "other"]).optional(),
+      search: z.string().optional(),
+      limit: z.number().min(1).max(100).default(20),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(({ input }) => getGuidelines({ ...input, status: "published" })),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const guideline = await getGuidelineById(input.id);
+      if (!guideline) throw new TRPCError({ code: "NOT_FOUND", message: "Guideline not found" });
+      if (guideline.status !== "published") throw new TRPCError({ code: "NOT_FOUND", message: "Guideline not found" });
+      return guideline;
+    }),
+
+  // Admin procedures
+  adminList: adminProcedure
+    .input(z.object({
+      status: z.enum(["pending", "published", "archived"]).optional(),
+      search: z.string().optional(),
+      limit: z.number().default(20),
+      offset: z.number().default(0),
+    }))
+    .query(({ input }) => getGuidelines({ ...input })),
+
+  updateStatus: adminProcedure
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["pending", "published", "archived"]),
+    }))
+    .mutation(async ({ input }) => {
+      await updateGuideline(input.id, { status: input.status });
+      return { success: true };
+    }),
+});
+
+// ============================================================
+// INGREDIENTS ROUTER
+// ============================================================
+const ingredientsRouter = router({
+  index: publicProcedure
+    .query(() => getIngredientIndex()),
+
+  getByName: publicProcedure
+    .input(z.object({ name: z.string() }))
+    .query(({ input }) => getIngredientByName(input.name)),
+});
+
+// ============================================================
+// FORMULATION ASSISTANT ROUTER
+// ============================================================
+const formulationRouter = router({
+  analyze: publicProcedure
+    .input(z.object({
+      ingredients: z.array(z.string()).min(1).max(20),
+      species: z.enum(["cat", "dog"]),
+      lifeStage: z.enum(["junior", "adult", "senior", "all"]).default("all"),
+      healthGoal: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Gather evidence from DB for each ingredient
+      const ingredientData = await Promise.all(
+        input.ingredients.map(ing => getIngredientByName(ing))
+      );
+
+      // Build context for LLM
+      const ingredientContext = input.ingredients.map((ing, i) => {
+        const papers = ingredientData[i] || [];
+        const mappings = papers.flatMap(p =>
+          ((p.ingredientMappings as any[]) || []).filter(
+            (m: any) => m.ingredient?.toLowerCase() === ing.toLowerCase()
+          )
+        );
+        return {
+          ingredient: ing,
+          paperCount: papers.length,
+          benefits: mappings.map((m: any) => m.health_relevance).filter(Boolean),
+          cautions: mappings.map((m: any) => m.caution).filter(Boolean),
+        };
+      });
+
+      const prompt = `You are a veterinary nutrition formulation expert.
+
+A pet food formulator wants to analyze this ingredient combination:
+Ingredients: ${input.ingredients.join(", ")}
+Target species: ${input.species}
+Life stage: ${input.lifeStage}
+Health goal: ${input.healthGoal || "general wellness"}
+
+Evidence from research database:
+${JSON.stringify(ingredientContext, null, 2)}
+
+Provide a formulation analysis as JSON with these fields:
+- overall_score: number 1-10 (nutritional synergy score)
+- overall_assessment: string (2-3 sentence overall assessment)
+- ingredient_analysis: array of objects, one per ingredient:
+  { ingredient, role, benefits, cautions, evidence_strength: "high"|"medium"|"low"|"limited" }
+- synergies: array of objects describing positive ingredient interactions:
+  { ingredients: ["ing1", "ing2"], description }
+- conflicts: array of objects describing potential conflicts:
+  { ingredients: ["ing1", "ing2"], description, severity: "high"|"medium"|"low" }
+- recommendations: array of 3-5 actionable recommendation strings
+- missing_nutrients: array of nutrients that may be lacking for the stated health goal
+- regulatory_notes: brief note on any claims that need substantiation`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a veterinary nutrition formulation expert. Respond with valid JSON only." },
+          { role: "user", content: prompt },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "formulation_analysis",
+            strict: false,
+            schema: {
+              type: "object",
+              properties: {
+                overall_score: { type: "number" },
+                overall_assessment: { type: "string" },
+                ingredient_analysis: { type: "array" },
+                synergies: { type: "array" },
+                conflicts: { type: "array" },
+                recommendations: { type: "array", items: { type: "string" } },
+                missing_nutrients: { type: "array", items: { type: "string" } },
+                regulatory_notes: { type: "string" },
+              },
+              required: ["overall_score", "overall_assessment", "ingredient_analysis", "recommendations"],
+              additionalProperties: true,
+            },
+          },
+        },
+      });
+
+      const rawContent = response.choices[0]?.message?.content;
+      if (!rawContent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI generation failed" });
+
+      const result = JSON.parse(rawContent);
+      return {
+        ...result,
+        inputIngredients: input.ingredients,
+        species: input.species,
+        lifeStage: input.lifeStage,
+        healthGoal: input.healthGoal,
+        evidenceSummary: ingredientContext,
+      };
+    }),
+});
+
+// ============================================================
 // APP ROUTER
 // ============================================================
 export const appRouter = router({
@@ -566,6 +730,9 @@ export const appRouter = router({
   breeds: breedsRouter,
   contentAngles: contentAnglesRouter,
   updateLogs: updateLogsRouter,
+  guidelines: guidelinesRouter,
+  ingredients: ingredientsRouter,
+  formulation: formulationRouter,
 });
 
 export type AppRouter = typeof appRouter;

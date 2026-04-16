@@ -5,9 +5,11 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   BookOpen,
+  BarChart3,
   Check,
   ChevronRight,
   Copy,
+  Download,
   ExternalLink,
   FlaskConical,
   Languages,
@@ -196,6 +198,16 @@ export default function PaperDetail({ params }: { params: { id: string } }) {
               {t("paper_back")}
             </Link>
 
+            <div className="flex items-center gap-2">
+              {/* Print / Save as PDF */}
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 px-4 py-2 text-[0.70rem] font-['IBM_Plex_Mono'] tracking-wider uppercase border border-[oklch(0.28_0.035_285)] text-[oklch(0.55_0.010_285)] hover:border-[oklch(0.46_0.28_290)] hover:text-[oklch(0.72_0.18_290)] transition-colors print:hidden"
+              >
+                <Download className="w-3.5 h-3.5" />
+                PDF
+              </button>
+
             {/* Translate Button */}
             <button
               onClick={handleTranslate}
@@ -215,6 +227,7 @@ export default function PaperDetail({ params }: { params: { id: string } }) {
                   ? t("paper_show_original")
                   : t("paper_translate_btn")}
             </button>
+            </div>
           </div>
 
           {/* Translated badge */}
@@ -383,6 +396,64 @@ export default function PaperDetail({ params }: { params: { id: string } }) {
                         </div>
                       );
                     })}
+                  </div>
+                </Section>
+              )}
+
+              {/* Chinese Abstract */}
+              {(paper as any).abstractZh && (
+                <Section title={t("paper_abstract_zh")} icon={Languages}>
+                  <div className="bg-[oklch(0.14_0.022_285)] border border-[oklch(0.22_0.030_285)] border-l-2 border-l-[oklch(0.82_0.18_75/0.6)] p-4">
+                    <p className="text-[0.80rem] text-[oklch(0.72_0.008_285)] leading-relaxed">
+                      {(paper as any).abstractZh}
+                    </p>
+                  </div>
+                </Section>
+              )}
+
+              {/* Chinese Core Summary */}
+              {(paper as any).summaryZh && (
+                <Section title={t("paper_summary_zh")} icon={Languages}>
+                  <div className="bg-[oklch(0.14_0.022_285)] border border-[oklch(0.22_0.030_285)] border-l-2 border-l-[oklch(0.82_0.18_75/0.6)] p-4">
+                    <p className="text-[0.82rem] text-[oklch(0.80_0.008_285)] leading-relaxed">
+                      {(paper as any).summaryZh}
+                    </p>
+                  </div>
+                </Section>
+              )}
+
+              {/* Chinese Consumer Summary */}
+              {(paper as any).consumerSummaryZh && (
+                <Section title={t("paper_consumer_summary_zh")} icon={Languages}>
+                  <div className="bg-[oklch(0.14_0.022_285)] border border-[oklch(0.22_0.030_285)] border-l-2 border-l-[oklch(0.82_0.18_75/0.6)] p-4">
+                    <p className="text-[0.80rem] text-[oklch(0.72_0.008_285)] leading-relaxed">
+                      {(paper as any).consumerSummaryZh}
+                    </p>
+                  </div>
+                </Section>
+              )}
+
+              {/* Key Ingredients */}
+              {(paper as any).ingredients && (paper as any).ingredients.length > 0 && (
+                <Section title={t("paper_ingredients")} icon={FlaskConical}>
+                  <div className="flex flex-wrap gap-2">
+                    {((paper as any).ingredients as string[]).map((ing, i) => (
+                      <span key={i} className="nasa-tag nasa-tag-green">{ing}</span>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {/* Infographic Data */}
+              {(paper as any).infographicData && (
+                <Section title={t("infographic_title")} icon={BarChart3}>
+                  <div className="p-4 bg-[oklch(0.14_0.022_285)] border border-[oklch(0.22_0.030_285)]">
+                    <div className="nasa-label mb-2">
+                      {t(`infographic_type_${(paper as any).infographicType}` as any) || (paper as any).infographicType}
+                    </div>
+                    <pre className="text-[0.72rem] text-[oklch(0.65_0.008_285)] font-['IBM_Plex_Mono'] overflow-x-auto whitespace-pre-wrap">
+                      {JSON.stringify((paper as any).infographicData, null, 2)}
+                    </pre>
                   </div>
                 </Section>
               )}

@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   breeds,
   contentAngles,
+  guidelines,
   InsertUser,
   paperBreeds,
   paperTopics,
@@ -356,4 +357,158 @@ export async function getMonthlyPapers(year?: number, month?: number) {
       sql`MONTH(${papers.createdAt}) = ${targetMonth}` as any
     ))
     .orderBy(desc(papers.createdAt));
+}
+
+// ============================================================
+// GUIDELINES HELPERS
+// ============================================================
+export interface GuidelinesFilter {
+  species?: string;
+  lifeStage?: string;
+  category?: string;
+  organization?: string;
+  status?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getGuidelines(filter: GuidelinesFilter = {}) {
+  const db = await getDb();
+  if (!db) return { guidelines: [], total: 0 };
+
+  const {
+    species, lifeStage, category, organization,
+    status = "published", search, limit = 20, offset = 0,
+  } = filter;
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (status) conditions.push(eq(guidelines.status, status as any));
+  if (species) conditions.push(eq(guidelines.species, species as any));
+  if (lifeStage) conditions.push(eq(guidelines.lifeStage, lifeStage as any));
+  if (category) conditions.push(eq(guidelines.category, category as any));
+  if (organization) conditions.push(eq(guidelines.organization, organization as any));
+  if (search) {
+    conditions.push(
+      or(
+        like(guidelines.title, `%${search}%`),
+        like(guidelines.summary, `%${search}%`)
+      ) as any
+    );
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [rows, countRows] = await Promise.all([
+    db.select().from(guidelines)
+      .where(whereClause)
+      .orderBy(desc(guidelines.year))
+      .limit(limit)
+      .offset(offset),
+    db.select({ count: sql<number>`COUNT(*)` }).from(guidelines).where(whereClause),
+  ]);
+
+  return { guidelines: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+
+export async function getGuidelineById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(guidelines).where(eq(guidelines.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateGuideline(id: number, data: Partial<typeof guidelines.$inferInsert>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(guidelines).set(data as any).where(eq(guidelines.id, id));
+}
+
+// ============================================================
+// INGREDIENT INTELLIGENCE HELPERS
+// ============================================================
+export async function getIngredientIndex() {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Aggregate all ingredients from published papers
+  const rows = await db.select({
+    id: papers.id,
+    title: papers.title,
+    species: papers.species,
+    lifeStage: papers.lifeStage,
+    year: papers.year,
+    evidenceLevel: papers.evidenceLevel,
+    ingredients: papers.ingredients,
+    ingredientMappings: papers.ingredientMappings,
+  }).from(papers)
+    .where(and(
+      eq(papers.status, "published"),
+      sql`${papers.ingredients} IS NOT NULL AND JSON_LENGTH(${papers.ingredients}) > 0` as any
+    ))
+    .orderBy(desc(papers.year));
+
+  // Build ingredient index: ingredient -> list of papers
+  const index: Record<string, {
+    ingredient: string;
+    papers: Array<{
+      paperId: number;
+      title: string;
+      species: string;
+      lifeStage: string;
+      year: number;
+      evidenceLevel: string;
+      health_relevance: string;
+      support_type: string;
+      evidence_note: string;
+      caution: string | null;
+    }>;
+  }> = {};
+
+  for (const row of rows) {
+    const mappings = (row.ingredientMappings as any[]) || [];
+    for (const m of mappings) {
+      const key = (m.ingredient || "").toLowerCase().trim();
+      if (!key) continue;
+      if (!index[key]) {
+        index[key] = { ingredient: m.ingredient, papers: [] };
+      }
+      index[key].papers.push({
+        paperId: row.id,
+        title: row.title,
+        species: row.species,
+        lifeStage: row.lifeStage,
+        year: row.year,
+        evidenceLevel: row.evidenceLevel,
+        health_relevance: m.health_relevance,
+        support_type: m.support_type,
+        evidence_note: m.evidence_note,
+        caution: m.caution ?? null,
+      });
+    }
+  }
+
+  return Object.values(index).sort((a, b) => a.ingredient.localeCompare(b.ingredient));
+}
+
+export async function getIngredientByName(name: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const rows = await db.select({
+    id: papers.id,
+    title: papers.title,
+    species: papers.species,
+    lifeStage: papers.lifeStage,
+    year: papers.year,
+    evidenceLevel: papers.evidenceLevel,
+    ingredients: papers.ingredients,
+    ingredientMappings: papers.ingredientMappings,
+  }).from(papers)
+    .where(and(
+      eq(papers.status, "published"),
+      sql`JSON_SEARCH(${papers.ingredients}, 'one', ${name}) IS NOT NULL` as any
+    ));
+
+  return rows;
 }

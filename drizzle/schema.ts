@@ -94,6 +94,25 @@ export const papers = mysqlTable("papers", {
   breedRelevance: varchar("breedRelevance", { length: 256 }),
   keywords: json("keywords").$type<string[]>(),
 
+  // Multilingual fields
+  abstractZh: text("abstract_zh"),
+  summaryZh: text("summary_zh"),
+  consumerSummaryZh: text("consumer_summary_zh"),
+
+  // Ingredient intelligence
+  ingredients: json("ingredients").$type<string[]>(),
+  ingredientMappings: json("ingredient_mappings").$type<Array<{
+    ingredient: string;
+    health_relevance: string;
+    support_type: string;
+    evidence_note: string;
+    caution: string | null;
+  }>>(),
+
+  // Infographic data
+  infographicType: varchar("infographic_type", { length: 64 }),
+  infographicData: json("infographic_data"),
+
   // AI-generated content
   coreSummary: text("coreSummary"),
   keyFindings: json("keyFindings").$type<string[]>(),
@@ -182,3 +201,45 @@ export const updateLogs = mysqlTable("update_logs", {
 
 export type UpdateLog = typeof updateLogs.$inferSelect;
 export type InsertUpdateLog = typeof updateLogs.$inferInsert;
+
+// ============================================================
+// GUIDELINES TABLE — AAHA/WSAVA clinical guidelines
+// ============================================================
+export const guidelines = mysqlTable("guidelines", {
+  id: int("id").autoincrement().primaryKey(),
+  title: text("title").notNull(),
+  organization: mysqlEnum("organization", ["AAHA", "WSAVA", "other"]).notNull(),
+  year: int("year").notNull(),
+  category: mysqlEnum("category", [
+    "nutrition",
+    "dental",
+    "senior_care",
+    "weight_management",
+    "kidney",
+    "liver",
+    "cardiac",
+    "dermatology",
+    "oncology",
+    "reproduction",
+    "general_health",
+  ]).default("general_health").notNull(),
+  species: mysqlEnum("species", ["cat", "dog", "both"]).default("both").notNull(),
+  lifeStage: mysqlEnum("life_stage", ["junior", "adult", "senior", "all"]).default("all").notNull(),
+  summary: text("summary"),
+  summaryZh: text("summary_zh"),
+  keyRecommendations: json("key_recommendations").$type<Array<{
+    recommendation: string;
+    rationale: string;
+    strength: string;
+    applicable_to: string;
+  }>>(),
+  relatedHealthTopics: json("related_health_topics").$type<string[]>(),
+  referenceUrl: varchar("reference_url", { length: 512 }),
+  harvardReference: text("harvard_reference"),
+  status: mysqlEnum("status", ["pending", "published", "archived"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Guideline = typeof guidelines.$inferSelect;
+export type InsertGuideline = typeof guidelines.$inferInsert;

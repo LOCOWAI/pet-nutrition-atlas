@@ -14,6 +14,9 @@ import { BreedsList, BreedDetail } from "./pages/Breeds";
 import MonthlyUpdates from "./pages/MonthlyUpdates";
 import ContentOpportunities from "./pages/ContentOpportunities";
 import Admin from "./pages/Admin";
+import Ingredients from "./pages/Ingredients";
+import Guidelines, { GuidelineDetail } from "./pages/Guidelines";
+import FormulationAssistant from "./pages/FormulationAssistant";
 
 function Router() {
   return (
@@ -32,6 +35,10 @@ function Router() {
         <Route path="/library" component={Library} />
         <Route path="/paper/:id" component={PaperDetail} />
         <Route path="/admin" component={Admin} />
+        <Route path="/ingredients" component={Ingredients} />
+        <Route path="/guidelines" component={Guidelines} />
+        <Route path="/guidelines/:id" component={GuidelineDetail} />
+        <Route path="/formulation" component={FormulationAssistant} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
