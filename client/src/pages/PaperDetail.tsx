@@ -1,3 +1,4 @@
+import InfographicRenderer from "@/components/InfographicRenderer";
 import PaperCard from "@/components/PaperCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
@@ -447,14 +448,13 @@ export default function PaperDetail({ params }: { params: { id: string } }) {
               {/* Infographic Data */}
               {(paper as any).infographicData && (
                 <Section title={t("infographic_title")} icon={BarChart3}>
-                  <div className="p-4 bg-[oklch(0.14_0.022_285)] border border-[oklch(0.22_0.030_285)]">
-                    <div className="nasa-label mb-2">
-                      {t(`infographic_type_${(paper as any).infographicType}` as any) || (paper as any).infographicType}
-                    </div>
-                    <pre className="text-[0.72rem] text-[oklch(0.65_0.008_285)] font-['IBM_Plex_Mono'] overflow-x-auto whitespace-pre-wrap">
-                      {JSON.stringify((paper as any).infographicData, null, 2)}
-                    </pre>
+                  <div className="nasa-label mb-3">
+                    {t(`infographic_type_${(paper as any).infographicType}` as any) || (paper as any).infographicType}
                   </div>
+                  <InfographicRenderer
+                    data={(paper as any).infographicData}
+                    infographicType={(paper as any).infographicType}
+                  />
                 </Section>
               )}
 
