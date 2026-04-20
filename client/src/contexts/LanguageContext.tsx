@@ -17,6 +17,7 @@ const translations = {
     nav_content_opportunities: "Content Opportunities",
     nav_reference_library: "Reference Library",
     nav_admin: "Admin",
+    nav_more: "More",
     nav_sign_in: "Sign In",
     nav_sign_out: "Sign Out",
 
@@ -368,6 +369,7 @@ const translations = {
     nav_content_opportunities: "内容机会",
     nav_reference_library: "文献库",
     nav_admin: "管理后台",
+    nav_more: "更多",
     nav_sign_in: "登录",
     nav_sign_out: "退出",
 
