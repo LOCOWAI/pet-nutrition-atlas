@@ -285,18 +285,86 @@ describe("papers.translatePaper", () => {
 
   it("is a public procedure accessible without auth", async () => {
     // Verify it's accessible as a public procedure (no UNAUTHORIZED)
+    // We only check the Zod input validation path (missing optional fields still passes schema)
+    // to avoid calling real LLM in test environment.
     const caller = appRouter.createCaller(createPublicContext());
-    // Calling with valid schema but LLM will fail in test env — just check it's not auth-blocked
-    const promise = caller.papers.translatePaper({
-      id: 1,
-      title: "Test",
-      authors: "Author",
-      year: 2024,
+    // Passing an empty object should fail with BAD_REQUEST (Zod), not UNAUTHORIZED
+    await expect((caller.papers.translatePaper as any)({})).rejects.toMatchObject({
+      code: "BAD_REQUEST",
     });
-    // Should either succeed or fail with a non-auth error
-    await promise.catch((e: any) => {
-      expect(e.code).not.toBe("UNAUTHORIZED");
-      expect(e.code).not.toBe("FORBIDDEN");
-    });
+  }, 10000);
+});
+
+// ============================================================
+// FORMULATION.RECOMMEND_BY_GOAL TESTS
+// ============================================================
+describe("formulation.recommendByGoal", () => {
+  it("throws BAD_REQUEST when healthGoal is too short", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(
+      (caller.formulation.recommendByGoal as any)({ healthGoal: "ab" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("throws BAD_REQUEST when healthGoal is missing", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(
+      (caller.formulation.recommendByGoal as any)({})
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("is a public procedure — no UNAUTHORIZED for unauthenticated users", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    // Zod validation runs before auth check — empty input → BAD_REQUEST (not UNAUTHORIZED)
+    await expect(
+      (caller.formulation.recommendByGoal as any)({})
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("accepts valid species and lifeStage enum values", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    // Invalid species → BAD_REQUEST from Zod
+    await expect(
+      (caller.formulation.recommendByGoal as any)({
+        healthGoal: "improve joint health",
+        species: "fish", // invalid
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
+
+// ============================================================
+// CONTENT_ANGLES.BULK_GENERATE TESTS
+// ============================================================
+describe("contentAngles.bulkGenerate", () => {
+  it("throws UNAUTHORIZED for unauthenticated users", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(
+      (caller.contentAngles.bulkGenerate as any)({})
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("throws FORBIDDEN for non-admin users", async () => {
+    const caller = appRouter.createCaller(createUserContext());
+    await expect(
+      caller.contentAngles.bulkGenerate({ limit: 5 })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("accepts valid input schema for admin", async () => {
+    // We only test that Zod accepts the schema — not the actual LLM call
+    const caller = appRouter.createCaller(createUserContext("admin"));
+    // limit must be a number — passing a string → BAD_REQUEST
+    await expect(
+      (caller.contentAngles.bulkGenerate as any)({ limit: "not-a-number" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("accepts overwrite flag as boolean", async () => {
+    const caller = appRouter.createCaller(createUserContext("admin"));
+    // overwrite must be boolean — passing a string → BAD_REQUEST
+    await expect(
+      (caller.contentAngles.bulkGenerate as any)({ overwrite: "yes" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

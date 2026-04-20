@@ -15,6 +15,10 @@ const FORMAT_TYPE_KEYS = [
   { value: "brand_education", key: "format_brand_education" as const },
   { value: "social_post", key: "format_social_post" as const },
   { value: "scientific_brief", key: "format_scientific_brief" as const },
+  { value: "blog_article", key: "format_blog_article" as const },
+  { value: "email_campaign", key: "format_email_campaign" as const },
+  { value: "product_claim", key: "format_product_claim" as const },
+  { value: "vet_education", key: "format_vet_education" as const },
 ];
 
 const FORMAT_COLORS: Record<string, string> = {
@@ -26,6 +30,10 @@ const FORMAT_COLORS: Record<string, string> = {
   brand_education: "",
   social_post: "nasa-tag-red",
   scientific_brief: "nasa-tag-blue",
+  blog_article: "nasa-tag-green",
+  email_campaign: "nasa-tag-blue",
+  product_claim: "nasa-tag-red",
+  vet_education: "",
 };
 
 export default function ContentOpportunities() {

@@ -506,6 +506,120 @@ const contentAnglesRouter = router({
       offset: z.number().default(0),
     }))
     .query(({ input }) => getContentAngles(input.formatType, input.limit, input.offset)),
+
+  // Admin: bulk generate content angles for all published papers that have none
+  bulkGenerate: adminProcedure
+    .input(z.object({
+      limit: z.number().default(20), // max papers to process per call
+      overwrite: z.boolean().default(false), // if true, regenerate even if angles exist
+    }))
+    .mutation(async ({ input }) => {
+      const { papers: allPapers } = await getPapers({ status: "published", limit: 200, offset: 0 });
+
+      // Filter papers that need content angles generated
+      // Check which papers already have content angles by querying the DB
+      const { getDb: getDbCheck } = await import("./db");
+      const { contentAngles: caTable } = await import("../drizzle/schema");
+      const { inArray } = await import("drizzle-orm");
+      const dbCheck = await getDbCheck();
+      let paperIdsWithAngles: number[] = [];
+      if (dbCheck && !input.overwrite) {
+        const existing = await dbCheck.selectDistinct({ paperId: caTable.paperId }).from(caTable);
+        paperIdsWithAngles = existing.map((r: { paperId: number | null }) => r.paperId).filter((id): id is number => id !== null);
+      }
+      const toProcess = input.overwrite
+        ? allPapers.slice(0, input.limit)
+        : allPapers.filter(p => !paperIdsWithAngles.includes(p.id)).slice(0, input.limit);
+
+      let generated = 0;
+      const errors: string[] = [];
+
+      for (const paper of toProcess) {
+        try {
+          const prompt = `You are a pet nutrition content strategist for pet food brands.
+
+Based on this peer-reviewed research paper, generate 3 distinct content angle ideas that a pet food brand could use for marketing, education, or social media content.
+
+Paper: "${paper.title}"
+Authors: ${paper.authors}
+Year: ${paper.year}
+Journal: ${paper.journal}
+Core Summary: ${paper.coreSummary || ""}
+Key Findings: ${Array.isArray(paper.keyFindings) ? (paper.keyFindings as string[]).join("; ") : ""}
+Practical Relevance: ${paper.practicalRelevance || ""}
+Species: ${paper.species} | Life Stage: ${paper.lifeStage || "all"}
+
+For each content angle provide: format_type (one of: social_post, blog_article, infographic, video_script, email_campaign, product_claim, vet_education), title_idea, consumer_summary (1-2 sentences for pet owners), professional_summary (1-2 sentences for vets/nutritionists), target_audience, risk_note (any claim substantiation needed).`;
+
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: "You are a pet nutrition content strategist. Respond with valid JSON only." },
+              { role: "user", content: prompt },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "content_angles_bulk",
+                strict: false,
+                schema: {
+                  type: "object",
+                  properties: {
+                    angles: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          format_type: { type: "string" },
+                          title_idea: { type: "string" },
+                          consumer_summary: { type: "string" },
+                          professional_summary: { type: "string" },
+                          target_audience: { type: "string" },
+                          risk_note: { type: "string" },
+                        },
+                        required: ["format_type", "title_idea", "consumer_summary", "professional_summary", "target_audience", "risk_note"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["angles"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const rawC = response.choices[0]?.message?.content;
+          const cStr = typeof rawC === "string" ? rawC : null;
+          if (!cStr) continue;
+
+          const parsed = JSON.parse(cStr);
+          const angles = parsed.angles || [];
+
+          // Save to DB using existing generateContentAngles helper
+          const { getDb } = await import("./db");
+          const { contentAngles } = await import("../drizzle/schema");
+          const db = await getDb();
+          if (db && angles.length > 0) {
+            await db.insert(contentAngles).values(
+              angles.map((a: any) => ({
+                paperId: paper.id,
+                formatType: a.format_type,
+                titleIdea: a.title_idea,
+                consumerSummary: a.consumer_summary,
+                professionalSummary: a.professional_summary,
+                targetAudience: a.target_audience,
+                riskNote: a.risk_note,
+              }))
+            );
+            generated += angles.length;
+          }
+        } catch (e) {
+          errors.push(`Paper ${paper.id}: ${String(e)}`);
+        }
+      }
+
+      return { processed: toProcess.length, generated, errors };
+    }),
 });
 
 // ============================================================
@@ -615,6 +729,128 @@ const ingredientsRouter = router({
 // FORMULATION ASSISTANT ROUTER
 // ============================================================
 const formulationRouter = router({
+  // Health Goal → AI recommends Ingredients backed by DB papers
+  recommendByGoal: publicProcedure
+    .input(z.object({
+      healthGoal: z.string().min(3).max(300),
+      species: z.enum(["cat", "dog"]).optional(),
+      lifeStage: z.enum(["junior", "adult", "senior", "all"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Step 1: Retrieve relevant published papers from DB
+      const { papers: relevantPapers } = await getPapers({
+        status: "published",
+        species: input.species,
+        lifeStage: input.lifeStage,
+        limit: 30,
+        offset: 0,
+      });
+
+      // Step 2: Build evidence context
+      const paperContext = relevantPapers.slice(0, 20).map(p => ({
+        id: p.id,
+        title: p.title,
+        authors: p.authors,
+        year: p.year,
+        journal: p.journal,
+        keyFindings: p.keyFindings,
+        coreSummary: p.coreSummary,
+        evidenceLevel: p.evidenceLevel,
+        studyType: p.studyType,
+        species: p.species,
+        lifeStage: p.lifeStage,
+      }));
+
+      const systemPrompt = `You are a veterinary nutrition scientist with expertise in pet food formulation. Based on the user's health goal and the provided peer-reviewed research evidence, recommend specific ingredients that are scientifically supported. Always ground your recommendations in the provided papers.`;
+
+      const userPrompt = `Health Goal: "${input.healthGoal}"
+Target Species: ${input.species || "cat or dog"}
+Life Stage: ${input.lifeStage || "any"}
+
+Research Evidence from Database:
+${JSON.stringify(paperContext, null, 2)}
+
+Recommend ingredients that help achieve the stated health goal. For each ingredient: explain mechanism, cite specific paper IDs from the evidence, rate evidence strength, note cautions, suggest inclusion levels if known.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "ingredient_recommendations",
+            strict: false,
+            schema: {
+              type: "object",
+              properties: {
+                summary: { type: "string" },
+                recommendations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      ingredient: { type: "string" },
+                      category: { type: "string" },
+                      mechanism: { type: "string" },
+                      evidenceStrength: { type: "string", enum: ["high", "moderate", "limited", "emerging"] },
+                      inclusionNote: { type: "string" },
+                      cautions: { type: "string" },
+                      supportingPaperIds: { type: "array", items: { type: "number" } },
+                      supportingPaperTitles: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["ingredient", "category", "mechanism", "evidenceStrength", "supportingPaperIds", "supportingPaperTitles"],
+                    additionalProperties: true,
+                  },
+                },
+                formulationTips: { type: "array", items: { type: "string" } },
+                regulatoryNote: { type: "string" },
+              },
+              required: ["summary", "recommendations", "formulationTips"],
+              additionalProperties: true,
+            },
+          },
+        },
+      });
+
+      const rawRec = response.choices[0]?.message?.content;
+      const recStr = typeof rawRec === "string" ? rawRec : null;
+      if (!recStr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI recommendation failed" });
+
+      const result = JSON.parse(recStr);
+
+      // Attach full paper details for cited papers
+      const citedPaperIds: number[] = [];
+      for (const rec of (result.recommendations || [])) {
+        for (const id of (rec.supportingPaperIds || [])) {
+          if (!citedPaperIds.includes(id)) citedPaperIds.push(id);
+        }
+      }
+      const citedPapers = relevantPapers.filter(p => citedPaperIds.includes(p.id));
+
+      return {
+        healthGoal: input.healthGoal,
+        species: input.species,
+        lifeStage: input.lifeStage,
+        summary: result.summary as string,
+        recommendations: (result.recommendations || []) as Array<{
+          ingredient: string;
+          category: string;
+          mechanism: string;
+          evidenceStrength: "high" | "moderate" | "limited" | "emerging";
+          inclusionNote?: string;
+          cautions?: string;
+          supportingPaperIds: number[];
+          supportingPaperTitles: string[];
+        }>,
+        formulationTips: (result.formulationTips || []) as string[],
+        regulatoryNote: (result.regulatoryNote || "") as string,
+        citedPapers,
+        totalPapersSearched: relevantPapers.length,
+      };
+    }),
+
   analyze: publicProcedure
     .input(z.object({
       ingredients: z.array(z.string()).min(1).max(20),
@@ -698,9 +934,10 @@ Provide a formulation analysis as JSON with these fields:
       });
 
       const rawContent = response.choices[0]?.message?.content;
-      if (!rawContent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI generation failed" });
+      const contentStr = typeof rawContent === "string" ? rawContent : null;
+      if (!contentStr) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI generation failed" });
 
-      const result = JSON.parse(rawContent);
+      const result = JSON.parse(contentStr);
       return {
         ...result,
         inputIngredients: input.ingredients,

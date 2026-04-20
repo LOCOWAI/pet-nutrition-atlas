@@ -105,3 +105,12 @@
 - [x] 前端 MonthlyUpdates 页面：改为真实 API 数据
 - [x] 前端 ContentOpportunities 页面：改为真实 API 数据
 - [x] 验证数据库中 status 字段值，确认 published 记录存在（20 条已迁移）
+
+## Phase 11: R&D Assistant 重设计 + Content Opportunities 扩充
+- [x] 重设计 R&D Assistant：用户输入 Health Goal → AI 检索文献库 → 推荐 Ingredients + 文献支撑
+- [x] 后端新增 formulation.recommendByGoal API（检索 published 文献 → AI 结构化推荐）
+- [x] 前端重建 FormulationAssistant 页面（Health Goal 输入框 + 推荐卡片展示）
+- [x] 后端新增 contentAngles.bulkGenerate API（基于全量文献库批量生成 Content Angles）
+- [x] Content Opportunities 前端支持 12 种格式类型筛选（新增 blog_article/email_campaign/product_claim/vet_education）
+- [x] Admin 页面增加“批量生成 Content Angles”按钮（20篇/次）
+- [x] 更新 Vitest 测试，40 个测试全部通过

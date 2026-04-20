@@ -285,6 +285,11 @@ export default function Admin() {
 
   const { data: stats } = trpc.papers.getStats.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
 
+  const bulkGenerate = trpc.contentAngles.bulkGenerate.useMutation({
+    onSuccess: (data) => toast.success(isZh ? `批量生成完成：${data.generated} 条新内容方向，共处理 ${data.processed} 篇` : `Bulk generation done: ${data.generated} new angles from ${data.processed} papers`),
+    onError: () => toast.error(isZh ? "批量生成失败" : "Bulk generation failed"),
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -334,6 +339,21 @@ export default function Admin() {
               <div className="nasa-label">Administration</div>
               <h1 className="text-2xl font-bold text-white font-['IBM_Plex_Sans']">{t("admin_title")}</h1>
             </div>
+          </div>
+
+          {/* Bulk generate button */}
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => bulkGenerate.mutate({ limit: 20 })}
+              disabled={bulkGenerate.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-[oklch(0.46_0.28_290/0.15)] border border-[oklch(0.46_0.28_290/0.40)] text-[oklch(0.72_0.18_290)] text-[0.70rem] font-['IBM_Plex_Mono'] tracking-wider uppercase rounded-sm hover:bg-[oklch(0.46_0.28_290/0.25)] disabled:opacity-50 transition-all"
+            >
+              {bulkGenerate.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
+              {isZh ? "批量生成内容方向 (20篇)" : "Bulk Generate Content Angles (20 papers)"}
+            </button>
+            {bulkGenerate.isPending && (
+              <span className="text-[0.65rem] text-[oklch(0.52_0.010_285)] font-['IBM_Plex_Mono']">⏳ {isZh ? "AI 正在处理，约需 30-60 秒..." : "AI processing, ~30-60s..."}</span>
+            )}
           </div>
 
           {/* Stats */}

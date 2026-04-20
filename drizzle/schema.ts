@@ -162,16 +162,7 @@ export type PaperBreed = typeof paperBreeds.$inferSelect;
 export const contentAngles = mysqlTable("content_angles", {
   id: int("id").autoincrement().primaryKey(),
   paperId: int("paperId").notNull(),
-  formatType: mysqlEnum("formatType", [
-    "xiaohongshu",
-    "ecommerce_detail",
-    "faq",
-    "video_script",
-    "infographic",
-    "brand_education",
-    "social_post",
-    "scientific_brief",
-  ]).notNull(),
+  formatType: mysqlEnum("formatType", ["xiaohongshu", "ecommerce_detail", "faq", "video_script", "infographic", "brand_education", "social_post", "scientific_brief", "blog_article", "email_campaign", "product_claim", "vet_education"]).notNull(),
   titleIdea: varchar("titleIdea", { length: 512 }),
   consumerSummary: text("consumerSummary"),
   professionalSummary: text("professionalSummary"),

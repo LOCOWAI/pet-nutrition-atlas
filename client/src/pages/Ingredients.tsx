@@ -155,7 +155,7 @@ export default function Ingredients() {
                           {item.ingredient}
                         </span>
                         {hasCaution && (
-                          <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.82_0.18_75)] flex-shrink-0" title="Caution noted" />
+                          <AlertTriangle className="w-3.5 h-3.5 text-[oklch(0.82_0.18_75)] flex-shrink-0" />
                         )}
                         {speciesTags.map((s) => (
                           <span

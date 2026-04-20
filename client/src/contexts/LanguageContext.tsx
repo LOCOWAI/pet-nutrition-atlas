@@ -278,6 +278,10 @@ const translations = {
     format_brand_education: "Brand Education",
     format_social_post: "Social Post",
     format_scientific_brief: "Scientific Brief",
+    format_blog_article: "Blog Article",
+    format_email_campaign: "Email Campaign",
+    format_product_claim: "Product Claim",
+    format_vet_education: "Vet Education",
     common_all: "All",
 
     // === INGREDIENTS MODULE ===
@@ -625,6 +629,10 @@ const translations = {
     format_brand_education: "品牌科普",
     format_social_post: "社交媒体",
     format_scientific_brief: "科学简报",
+    format_blog_article: "博客文章",
+    format_email_campaign: "邮件营销",
+    format_product_claim: "产品声称",
+    format_vet_education: "兽医科普",
     common_all: "全部",
 
     // === INGREDIENTS MODULE ===
